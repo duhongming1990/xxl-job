@@ -1,88 +1,147 @@
 package com.xxl.job.admin.core.conf;
 
+import com.xxl.job.admin.core.scheduler.XxlJobScheduler;
+import com.xxl.job.admin.dao.*;
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.stereotype.Component;
+
+import javax.annotation.Resource;
+import javax.sql.DataSource;
 
 /**
  * xxl-job config
  *
  * @author xuxueli 2017-04-28
  */
-@Configuration
-public class XxlJobAdminConfig implements InitializingBean{
+
+@Component
+public class XxlJobAdminConfig implements InitializingBean, DisposableBean {
+
     private static XxlJobAdminConfig adminConfig = null;
     public static XxlJobAdminConfig getAdminConfig() {
         return adminConfig;
     }
 
+
+    // ---------------------- XxlJobScheduler ----------------------
+
+    private XxlJobScheduler xxlJobScheduler;
+
     @Override
     public void afterPropertiesSet() throws Exception {
         adminConfig = this;
+
+        xxlJobScheduler = new XxlJobScheduler();
+        xxlJobScheduler.init();
     }
 
-    @Value("${xxl.job.mail.host}")
-    private String mailHost;
+    @Override
+    public void destroy() throws Exception {
+        xxlJobScheduler.destroy();
+    }
 
-    @Value("${xxl.job.mail.port}")
-    private String mailPort;
 
-    @Value("${xxl.job.mail.ssl}")
-    private boolean mailSSL;
+    // ---------------------- XxlJobScheduler ----------------------
 
-    @Value("${xxl.job.mail.username}")
-    private String mailUsername;
-
-    @Value("${xxl.job.mail.password}")
-    private String mailPassword;
-
-    @Value("${xxl.job.mail.sendNick}")
-    private String mailSendNick;
-
-    @Value("${xxl.job.login.username}")
-    private String loginUsername;
-
-    @Value("${xxl.job.login.password}")
-    private String loginPassword;
-
+    // conf
     @Value("${xxl.job.i18n}")
     private String i18n;
 
+    @Value("${xxl.job.accessToken}")
+    private String accessToken;
 
-    public String getMailHost() {
-        return mailHost;
-    }
+    @Value("${spring.mail.username}")
+    private String emailUserName;
 
-    public String getMailPort() {
-        return mailPort;
-    }
+    @Value("${xxl.job.triggerpool.fast.max}")
+    private int triggerPoolFastMax;
 
-    public boolean isMailSSL() {
-        return mailSSL;
-    }
+    @Value("${xxl.job.triggerpool.slow.max}")
+    private int triggerPoolSlowMax;
 
-    public String getMailUsername() {
-        return mailUsername;
-    }
+    @Value("${xxl.job.logretentiondays}")
+    private int logretentiondays;
 
-    public String getMailPassword() {
-        return mailPassword;
-    }
+    // dao, service
 
-    public String getMailSendNick() {
-        return mailSendNick;
-    }
+    @Resource
+    private XxlJobLogDao xxlJobLogDao;
+    @Resource
+    private XxlJobInfoDao xxlJobInfoDao;
+    @Resource
+    private XxlJobRegistryDao xxlJobRegistryDao;
+    @Resource
+    private XxlJobGroupDao xxlJobGroupDao;
+    @Resource
+    private XxlJobLogReportDao xxlJobLogReportDao;
+    @Resource
+    private JavaMailSender mailSender;
+    @Resource
+    private DataSource dataSource;
 
-    public String getLoginUsername() {
-        return loginUsername;
-    }
-
-    public String getLoginPassword() {
-        return loginPassword;
-    }
 
     public String getI18n() {
         return i18n;
+    }
+
+    public String getAccessToken() {
+        return accessToken;
+    }
+
+    public String getEmailUserName() {
+        return emailUserName;
+    }
+
+    public int getTriggerPoolFastMax() {
+        if (triggerPoolFastMax < 200) {
+            return 200;
+        }
+        return triggerPoolFastMax;
+    }
+
+    public int getTriggerPoolSlowMax() {
+        if (triggerPoolSlowMax < 100) {
+            return 100;
+        }
+        return triggerPoolSlowMax;
+    }
+
+    public int getLogretentiondays() {
+        if (logretentiondays < 7) {
+            return -1;  // Limit greater than or equal to 7, otherwise close
+        }
+        return logretentiondays;
+    }
+
+    public XxlJobLogDao getXxlJobLogDao() {
+        return xxlJobLogDao;
+    }
+
+    public XxlJobInfoDao getXxlJobInfoDao() {
+        return xxlJobInfoDao;
+    }
+
+    public XxlJobRegistryDao getXxlJobRegistryDao() {
+        return xxlJobRegistryDao;
+    }
+
+    public XxlJobGroupDao getXxlJobGroupDao() {
+        return xxlJobGroupDao;
+    }
+
+    public XxlJobLogReportDao getXxlJobLogReportDao() {
+        return xxlJobLogReportDao;
+    }
+
+    public JavaMailSender getMailSender() {
+        return mailSender;
+    }
+
+    public DataSource getDataSource() {
+        return dataSource;
     }
 
 }
